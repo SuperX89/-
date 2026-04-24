@@ -1,0 +1,61 @@
+// Prisma schema — cloud-ready (Postgres / Neon)
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id           String   @id @default(cuid())
+  name         String
+  images       String   // JSON array of image URLs
+  coverImage   String?
+  category     String
+  condition    String
+  costPrice    Int
+  sellingPrice Int
+  status       String   @default("available")
+  note         String?
+
+  reservationCustomerName String?
+  reservationContact      String?
+  reservationAt           DateTime?
+  reservationNote         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sales Sale[]
+
+  @@index([status])
+  @@index([category])
+  @@index([createdAt])
+}
+
+model Sale {
+  id        String @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  snapshotName      String
+  snapshotImage     String?
+  snapshotCostPrice Int
+
+  actualSalePrice Int
+  shippingCost    Int    @default(0)
+  profit          Int
+  soldAt          DateTime @default(now())
+  customerName    String?
+  contact         String?
+  trackingNumber  String?
+  note            String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([soldAt])
+  @@index([productId])
+}
