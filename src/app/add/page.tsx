@@ -188,10 +188,10 @@ export default function AddProductPage() {
         />
       </section>
 
-      {/* Sticky save button on mobile */}
+      {/* Sticky save button on mobile — sits above BottomNav */}
       <div
-        className="fixed bottom-0 inset-x-0 md:static z-30"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        className="fixed inset-x-0 md:static z-50"
+        style={{ bottom: "calc(84px + env(safe-area-inset-bottom))" }}
       >
         <div className="glass md:bg-transparent border-t border-ink-200 md:border-0 p-3 md:p-0">
           <div className="max-w-3xl mx-auto flex gap-2">
