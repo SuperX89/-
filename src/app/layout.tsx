@@ -39,7 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="flex">
             <SideNav />
             <main
-              className="flex-1 min-h-screen"
+              className="flex-1 min-h-screen min-w-0 w-full overflow-x-hidden"
               style={{ paddingBottom: "calc(84px + env(safe-area-inset-bottom))" }}
             >
               <div className="max-w-3xl mx-auto px-4 pt-5 pb-6 md:px-8 md:pt-10">
