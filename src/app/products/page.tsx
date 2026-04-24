@@ -128,9 +128,9 @@ export default function ProductsPage() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-72 rounded-2xl shimmer" />
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-[88px] rounded-2xl shimmer" />
           ))}
         </div>
       ) : products.length === 0 ? (
@@ -140,7 +140,7 @@ export default function ProductsPage() {
           <div className="text-[12px] text-ink-500 font-medium">
             พบ <span className="text-ink-900 font-bold">{products.length}</span> รายการ
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="space-y-2">
             {products.map((p) => (
               <ProductCard
                 key={p.id}
