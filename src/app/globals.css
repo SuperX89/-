@@ -10,6 +10,7 @@ html,
 body {
   background: #FBF8F2;
   color: #0F1419;
+  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
