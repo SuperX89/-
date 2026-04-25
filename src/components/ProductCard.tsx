@@ -12,16 +12,19 @@ export default function ProductCard({
   onReserve,
   onSold,
   onCancelReserve,
+  onPromote,
 }: {
   product: ProductDTO;
   onClick?: () => void;
   onReserve?: () => void;
   onSold?: () => void;
   onCancelReserve?: () => void;
+  onPromote?: () => void;
 }) {
   const profit = product.sellingPrice - product.costPrice;
   const cover = product.coverImage || product.images[0] || null;
   const isSold = product.status === "sold";
+  const isDraft = product.status === "draft";
 
   return (
     <div className="card overflow-hidden">
@@ -48,7 +51,7 @@ export default function ProductCard({
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 mb-0.5">
+          <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
             <StatusBadge status={product.status} />
             <ConditionBadge condition={product.condition} />
           </div>
@@ -63,16 +66,28 @@ export default function ProductCard({
 
         {/* Price */}
         <div className="flex-shrink-0 text-right">
-          <div className="font-bold text-ink-900 text-[15px] tracking-tight">
-            ฿{formatMoney(product.sellingPrice)}
-          </div>
-          <div
-            className={`text-[11px] font-semibold mt-0.5 ${
-              profit < 0 ? "text-red-500" : "text-brand-600"
-            }`}
-          >
-            {profit < 0 ? "−" : "+"}฿{formatMoney(Math.abs(profit))}
-          </div>
+          {isDraft ? (
+            <>
+              <div className="text-[11px] text-ink-400 font-medium">ทุน</div>
+              <div className="font-bold text-ink-700 text-[15px] tracking-tight">
+                ฿{formatMoney(product.costPrice)}
+              </div>
+              <div className="text-[10px] text-purple-600 font-semibold mt-0.5">ยังไม่ตั้งราคา</div>
+            </>
+          ) : (
+            <>
+              <div className="font-bold text-ink-900 text-[15px] tracking-tight">
+                ฿{formatMoney(product.sellingPrice)}
+              </div>
+              <div
+                className={`text-[11px] font-semibold mt-0.5 ${
+                  profit < 0 ? "text-red-500" : "text-brand-600"
+                }`}
+              >
+                {profit < 0 ? "−" : "+"}฿{formatMoney(Math.abs(profit))}
+              </div>
+            </>
+          )}
         </div>
       </button>
 
@@ -126,6 +141,15 @@ export default function ProductCard({
                 <CheckIcon className="h-3.5 w-3.5" /> ขายแล้ว
               </button>
             </>
+          )}
+          {isDraft && (
+            <button
+              className="flex-1 rounded-lg text-white font-semibold py-2 text-[12px] active:scale-95 transition inline-flex items-center justify-center gap-1"
+              style={{ background: "linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)" }}
+              onClick={onPromote}
+            >
+              <CheckIcon className="h-3.5 w-3.5" /> เพิ่มเข้าสต็อก
+            </button>
           )}
         </div>
       )}

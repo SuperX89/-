@@ -14,6 +14,10 @@ export function StatusBadge({ status }: { status: string }) {
       cls: "bg-ink-100 text-ink-700 ring-1 ring-ink-200",
       dot: "bg-ink-500",
     },
+    draft: {
+      cls: "bg-purple-50 text-purple-700 ring-1 ring-purple-200",
+      dot: "bg-purple-500",
+    },
   };
   const s = map[status] ?? map.sold;
   return (
@@ -29,6 +33,7 @@ export function ConditionBadge({ condition }: { condition: string }) {
     "like-new": "bg-sky-50 text-sky-700 ring-1 ring-sky-200",
     good: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
     defect: "bg-red-50 text-red-700 ring-1 ring-red-200",
+    unchecked: "bg-ink-100 text-ink-600 ring-1 ring-ink-200 italic",
   };
   return (
     <span className={`pill ${map[condition] ?? "bg-ink-100 text-ink-700 ring-1 ring-ink-200"}`}>

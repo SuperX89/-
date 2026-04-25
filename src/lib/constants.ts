@@ -12,10 +12,13 @@ export const CONDITIONS = [
   { value: "defect", label: "มีตำหนิ" },
 ] as const;
 
+export const CONDITION_UNCHECKED = "unchecked";
+
 export const STATUSES = [
   { value: "available", label: "พร้อมขาย" },
   { value: "reserved", label: "จองแล้ว" },
   { value: "sold", label: "ขายแล้ว" },
+  { value: "draft", label: "รอเพิ่มสต็อก" },
 ] as const;
 
 export type CategoryValue = (typeof CATEGORIES)[number]["value"];
@@ -29,6 +32,7 @@ export function categoryEmoji(v: string): string {
   return CATEGORIES.find((c) => c.value === v)?.emoji ?? "📦";
 }
 export function conditionLabel(v: string): string {
+  if (v === CONDITION_UNCHECKED) return "ยังไม่ได้เช็ค";
   return CONDITIONS.find((c) => c.value === v)?.label ?? v;
 }
 export function statusLabel(v: string): string {

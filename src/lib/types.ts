@@ -42,11 +42,14 @@ export type DashboardSummary = {
   available: number;
   reserved: number;
   sold: number;
+  draft: number;
   totalRevenue: number;
   totalProfit: number;
   unsoldCostValue: number;
   unsoldCount: number;
+  draftCostValue: number;
   recentSales: SaleDTO[];
   reservedProducts: ProductDTO[];
   recentAvailable: ProductDTO[];
+  draftProducts: ProductDTO[];
 };

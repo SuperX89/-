@@ -89,11 +89,6 @@ export default function DashboardPage() {
           {/* Quick status tiles */}
           <section className="grid grid-cols-4 gap-2.5">
             <StatusTile
-              label="ทั้งหมด"
-              value={data.totalProducts}
-              color="bg-ink-900 text-white"
-            />
-            <StatusTile
               label="พร้อมขาย"
               value={data.available}
               color="bg-brand-500 text-white"
@@ -107,6 +102,11 @@ export default function DashboardPage() {
               label="ขายแล้ว"
               value={data.sold}
               color="bg-ink-200 text-ink-700"
+            />
+            <StatusTile
+              label="รอเพิ่มสต็อก"
+              value={data.draft}
+              color="bg-purple-500 text-white"
             />
           </section>
 
@@ -137,6 +137,42 @@ export default function DashboardPage() {
               </div>
             </Link>
           </section>
+
+          {data.draftProducts.length > 0 && (
+            <section>
+              <SectionHeader
+                title="สินค้ารอเพิ่มสต็อก"
+                count={data.draft}
+                icon={
+                  <svg viewBox="0 0 24 24" className="h-4 w-4 text-purple-600" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                  </svg>
+                }
+                link={{ href: "/products?status=draft", label: "ตั้งราคา" }}
+              />
+              <div className="space-y-2">
+                {data.draftProducts.map((p) => (
+                  <MiniProductRow
+                    key={p.id}
+                    name={p.name}
+                    image={p.coverImage}
+                    category={p.category}
+                    right={
+                      <div className="text-right">
+                        <div className="text-[11px] text-ink-400">ทุน</div>
+                        <div className="font-semibold text-ink-700">
+                          ฿{formatMoney(p.costPrice)}
+                        </div>
+                        <div className="pill bg-purple-50 text-purple-700 ring-1 ring-purple-200 mt-0.5">
+                          ยังไม่ตั้งราคา
+                        </div>
+                      </div>
+                    }
+                  />
+                ))}
+              </div>
+            </section>
+          )}
 
           {data.reservedProducts.length > 0 && (
             <section>

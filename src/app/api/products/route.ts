@@ -9,7 +9,11 @@ export async function GET(req: NextRequest) {
   const q = searchParams.get("q");
 
   const where: Record<string, unknown> = {};
-  if (status && status !== "all") where.status = status;
+  if (status && status !== "all") {
+    where.status = status;
+  } else {
+    where.status = { not: "draft" };
+  }
   if (category && category !== "all") where.category = category;
   if (q) where.name = { contains: q };
 
@@ -32,6 +36,7 @@ export async function POST(req: NextRequest) {
     costPrice,
     sellingPrice,
     note,
+    status,
   } = body as {
     name?: string;
     images?: string[];
@@ -41,32 +46,40 @@ export async function POST(req: NextRequest) {
     costPrice?: number;
     sellingPrice?: number;
     note?: string | null;
+    status?: string;
   };
 
-  if (!name || name.trim().length === 0) {
-    return NextResponse.json({ error: "กรุณากรอกชื่อสินค้า" }, { status: 400 });
-  }
-  if (sellingPrice == null || sellingPrice < 0) {
-    return NextResponse.json({ error: "ราคาขายไม่ถูกต้อง" }, { status: 400 });
+  const isDraft = status === "draft";
+
+  if (!isDraft) {
+    if (!name || name.trim().length === 0) {
+      return NextResponse.json({ error: "กรุณากรอกชื่อสินค้า" }, { status: 400 });
+    }
+    if (sellingPrice == null || sellingPrice < 0) {
+      return NextResponse.json({ error: "ราคาขายไม่ถูกต้อง" }, { status: 400 });
+    }
   }
   if (costPrice != null && costPrice < 0) {
     return NextResponse.json({ error: "ราคาทุนไม่ถูกต้อง" }, { status: 400 });
   }
 
   const imagesArr = Array.isArray(images) ? images.filter(Boolean) : [];
+  if (isDraft && imagesArr.length === 0) {
+    return NextResponse.json({ error: "กรุณาแนบรูปอย่างน้อย 1 รูป" }, { status: 400 });
+  }
   const cover = coverImage || imagesArr[0] || null;
 
   const created = await prisma.product.create({
     data: {
-      name: name.trim(),
+      name: name?.trim() || (isDraft ? "(ยังไม่ได้ตั้งชื่อ)" : ""),
       images: JSON.stringify(imagesArr),
       coverImage: cover,
       category: category || "other",
-      condition: condition || "good",
+      condition: condition || (isDraft ? "unchecked" : "good"),
       costPrice: Math.max(0, Math.round(costPrice ?? 0)),
-      sellingPrice: Math.max(0, Math.round(sellingPrice)),
+      sellingPrice: Math.max(0, Math.round(sellingPrice ?? 0)),
       note: note?.trim() || null,
-      status: "available",
+      status: isDraft ? "draft" : "available",
     },
   });
 

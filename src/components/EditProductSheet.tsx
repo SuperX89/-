@@ -33,11 +33,11 @@ export default function EditProductSheet({
 
   useEffect(() => {
     if (product && open) {
-      setName(product.name);
+      setName(product.name === "(ยังไม่ได้ตั้งชื่อ)" ? "" : product.name);
       setImages(product.images);
       setCoverImage(product.coverImage);
       setCategory(product.category);
-      setCondition(product.condition);
+      setCondition(product.condition === "unchecked" ? "good" : product.condition);
       setCostPrice(String(product.costPrice));
       setSellingPrice(String(product.sellingPrice));
       setNote(product.note ?? "");

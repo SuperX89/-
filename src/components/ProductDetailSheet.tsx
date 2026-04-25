@@ -19,6 +19,7 @@ export default function ProductDetailSheet({
   onReserve,
   onSold,
   onCancelReserve,
+  onPromote,
 }: {
   product: ProductDTO | null;
   open: boolean;
@@ -28,6 +29,7 @@ export default function ProductDetailSheet({
   onReserve: () => void;
   onSold: () => void;
   onCancelReserve: () => void;
+  onPromote?: () => void;
 }) {
   const toast = useToast();
   const [confirmDel, setConfirmDel] = useState(false);
@@ -174,6 +176,15 @@ export default function ProductDetailSheet({
                 <CheckIcon /> ขายแล้ว
               </button>
             </>
+          )}
+          {product.status === "draft" && (
+            <button
+              className="btn-primary col-span-2"
+              onClick={onPromote}
+              style={{ background: "linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)" }}
+            >
+              <CheckIcon /> เพิ่มเข้าสต็อก
+            </button>
           )}
           {product.status !== "sold" && (
             <button className="btn-danger col-span-2" onClick={() => setConfirmDel(true)}>

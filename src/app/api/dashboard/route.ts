@@ -11,27 +11,34 @@ export async function GET() {
   const available = products.filter((p) => p.status === "available");
   const reserved = products.filter((p) => p.status === "reserved");
   const sold = products.filter((p) => p.status === "sold");
+  const draft = products.filter((p) => p.status === "draft");
+  const inStock = [...available, ...reserved, ...sold];
 
   const totalRevenue = sales.reduce((s, x) => s + x.actualSalePrice, 0);
   const totalProfit = sales.reduce((s, x) => s + x.profit, 0);
   const unsold = [...available, ...reserved];
   const unsoldCostValue = unsold.reduce((s, p) => s + p.costPrice, 0);
+  const draftCostValue = draft.reduce((s, p) => s + p.costPrice, 0);
 
   const recentSales = sales.slice(0, 5).map(toSaleDTO);
   const reservedProducts = reserved.map(toProductDTO);
   const recentAvailable = available.slice(0, 5).map(toProductDTO);
+  const draftProducts = draft.slice(0, 8).map(toProductDTO);
 
   return NextResponse.json({
-    totalProducts: products.length,
+    totalProducts: inStock.length,
     available: available.length,
     reserved: reserved.length,
     sold: sold.length,
+    draft: draft.length,
     totalRevenue,
     totalProfit,
     unsoldCostValue,
     unsoldCount: unsold.length,
+    draftCostValue,
     recentSales,
     reservedProducts,
     recentAvailable,
+    draftProducts,
   });
 }

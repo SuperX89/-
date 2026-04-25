@@ -7,12 +7,13 @@ import ProductDetailSheet from "@/components/ProductDetailSheet";
 import ReserveSheet from "@/components/ReserveSheet";
 import SellSheet from "@/components/SellSheet";
 import EditProductSheet from "@/components/EditProductSheet";
+import PromoteDraftSheet from "@/components/PromoteDraftSheet";
 import { useToast } from "@/components/Toaster";
 import { CategoryIcon, PlusIcon, SearchIcon } from "@/components/Icons";
 import { STATUSES, CATEGORIES } from "@/lib/constants";
 import type { ProductDTO } from "@/lib/types";
 
-type SheetKind = "detail" | "reserve" | "sell" | "edit" | null;
+type SheetKind = "detail" | "reserve" | "sell" | "edit" | "promote" | null;
 
 export default function ProductsPage() {
   const toast = useToast();
@@ -155,6 +156,10 @@ export default function ProductsPage() {
                   setSheet("sell");
                 }}
                 onCancelReserve={() => cancelReservation(p)}
+                onPromote={() => {
+                  setSelected(p);
+                  setSheet("promote");
+                }}
               />
             ))}
           </div>
@@ -170,6 +175,7 @@ export default function ProductsPage() {
         onReserve={() => setSheet("reserve")}
         onSold={() => setSheet("sell")}
         onCancelReserve={() => selected && cancelReservation(selected)}
+        onPromote={() => setSheet("promote")}
       />
 
       <ReserveSheet
@@ -200,6 +206,17 @@ export default function ProductsPage() {
         onSaved={(updated) => {
           setSelected(updated);
           setSheet("detail");
+          load();
+        }}
+      />
+
+      <PromoteDraftSheet
+        product={selected}
+        open={sheet === "promote"}
+        onClose={() => setSheet("detail")}
+        onDone={(updated) => {
+          setSelected(updated);
+          setSheet(null);
           load();
         }}
       />

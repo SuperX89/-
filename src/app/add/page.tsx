@@ -8,9 +8,13 @@ import { CategoryIcon, CashIcon, CheckIcon } from "@/components/Icons";
 import { CATEGORIES, CONDITIONS } from "@/lib/constants";
 import { formatMoney } from "@/lib/format";
 
+type Mode = "stock" | "draft";
+
 export default function AddProductPage() {
   const router = useRouter();
   const toast = useToast();
+
+  const [mode, setMode] = useState<Mode>("stock");
 
   const [name, setName] = useState("");
   const [images, setImages] = useState<string[]>([]);
@@ -24,12 +28,16 @@ export default function AddProductPage() {
 
   const profit = (Number(sellingPrice) || 0) - (Number(costPrice) || 0);
   const hasProfit = costPrice && sellingPrice;
+  const isDraft = mode === "draft";
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) return toast("กรุณากรอกชื่อสินค้า", "error");
-    if (!sellingPrice || Number(sellingPrice) < 0)
+
+    if (!isDraft && !name.trim()) return toast("กรุณากรอกชื่อสินค้า", "error");
+    if (!isDraft && (!sellingPrice || Number(sellingPrice) < 0))
       return toast("กรุณากรอกราคาขาย", "error");
+    if (isDraft && images.length === 0)
+      return toast("กรุณาแนบรูปอย่างน้อย 1 รูป", "error");
 
     setSaving(true);
     try {
@@ -41,14 +49,15 @@ export default function AddProductPage() {
           images,
           coverImage,
           category,
-          condition,
+          condition: isDraft ? "unchecked" : condition,
           costPrice: Number(costPrice) || 0,
-          sellingPrice: Number(sellingPrice) || 0,
+          sellingPrice: isDraft ? 0 : Number(sellingPrice) || 0,
           note,
+          status: isDraft ? "draft" : "available",
         }),
       });
       if (!res.ok) throw new Error((await res.json()).error || "เกิดข้อผิดพลาด");
-      toast("เพิ่มสินค้าสำเร็จ 🎉");
+      toast(isDraft ? "บันทึกแบบร่างแล้ว" : "เพิ่มสินค้าสำเร็จ");
       router.push("/products");
     } catch (e) {
       toast(e instanceof Error ? e.message : "เกิดข้อผิดพลาด", "error");
@@ -62,11 +71,55 @@ export default function AddProductPage() {
       <header>
         <p className="text-[13px] text-ink-500 font-medium">สินค้าชิ้นใหม่</p>
         <h1 className="h-page mt-0.5">เพิ่มสินค้า</h1>
-        <p className="text-[13px] text-ink-500 mt-1">ถ่ายรูป กรอกข้อมูล แล้วกดบันทึก</p>
+        <p className="text-[13px] text-ink-500 mt-1">
+          {isDraft
+            ? "ใส่แค่ทุน + รูปก่อน — ไปตั้งราคา/เช็คตำหนิทีหลังได้"
+            : "ถ่ายรูป กรอกข้อมูล แล้วกดบันทึก"}
+        </p>
       </header>
 
+      {/* Mode toggle */}
+      <section className="card p-1.5">
+        <div className="grid grid-cols-2 gap-1">
+          <button
+            type="button"
+            onClick={() => setMode("stock")}
+            className={
+              mode === "stock"
+                ? "rounded-xl text-white font-semibold py-2.5 text-[13px] tracking-tight"
+                : "rounded-xl text-ink-600 font-semibold py-2.5 text-[13px] tracking-tight"
+            }
+            style={
+              mode === "stock"
+                ? { background: "linear-gradient(135deg, #10b981 0%, #0d9488 100%)" }
+                : undefined
+            }
+          >
+            สต็อกพร้อมขาย
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("draft")}
+            className={
+              mode === "draft"
+                ? "rounded-xl text-white font-semibold py-2.5 text-[13px] tracking-tight"
+                : "rounded-xl text-ink-600 font-semibold py-2.5 text-[13px] tracking-tight"
+            }
+            style={
+              mode === "draft"
+                ? { background: "linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)" }
+                : undefined
+            }
+          >
+            แบบร่าง (รอเพิ่มทีหลัง)
+          </button>
+        </div>
+      </section>
+
       <section className="card p-4">
-        <label className="label">รูปสินค้า (สูงสุด 5 รูป)</label>
+        <label className="label">
+          รูปสินค้า (สูงสุด 5 รูป) {isDraft && <span className="text-red-500">*</span>}
+        </label>
         <ImageUploader
           images={images}
           coverImage={coverImage}
@@ -80,13 +133,14 @@ export default function AddProductPage() {
       <section className="card p-4 space-y-4">
         <div>
           <label className="label">
-            ชื่อสินค้า <span className="text-red-500">*</span>
+            ชื่อสินค้า {!isDraft && <span className="text-red-500">*</span>}
+            {isDraft && <span className="text-ink-400 font-normal text-[12px]"> (ใส่ทีหลังได้)</span>}
           </label>
           <input
             className="input"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="เช่น รถหัดเดิน Fisher-Price"
+            placeholder={isDraft ? "เช่น lot1, ของจากญาติ" : "เช่น รถหัดเดิน Fisher-Price"}
           />
         </div>
 
@@ -107,21 +161,23 @@ export default function AddProductPage() {
           </div>
         </div>
 
-        <div>
-          <label className="label">สภาพสินค้า</label>
-          <div className="grid grid-cols-3 gap-2">
-            {CONDITIONS.map((c) => (
-              <button
-                key={c.value}
-                type="button"
-                onClick={() => setCondition(c.value)}
-                className={condition === c.value ? "chip-on justify-center" : "chip-off justify-center"}
-              >
-                {c.label}
-              </button>
-            ))}
+        {!isDraft && (
+          <div>
+            <label className="label">สภาพสินค้า</label>
+            <div className="grid grid-cols-3 gap-2">
+              {CONDITIONS.map((c) => (
+                <button
+                  key={c.value}
+                  type="button"
+                  onClick={() => setCondition(c.value)}
+                  className={condition === c.value ? "chip-on justify-center" : "chip-off justify-center"}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </section>
 
       <section className="card p-4 space-y-3">
@@ -129,7 +185,7 @@ export default function AddProductPage() {
           <CashIcon className="h-4 w-4 text-brand-600" />
           ราคา
         </h2>
-        <div className="grid grid-cols-2 gap-2">
+        <div className={isDraft ? "" : "grid grid-cols-2 gap-2"}>
           <div>
             <label className="label">ราคาทุน</label>
             <div className="relative">
@@ -144,25 +200,27 @@ export default function AddProductPage() {
               />
             </div>
           </div>
-          <div>
-            <label className="label">
-              ราคาขาย <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-400 font-medium">฿</span>
-              <input
-                className="input pl-8"
-                type="number"
-                inputMode="decimal"
-                value={sellingPrice}
-                onChange={(e) => setSellingPrice(e.target.value)}
-                placeholder="0"
-              />
+          {!isDraft && (
+            <div>
+              <label className="label">
+                ราคาขาย <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-400 font-medium">฿</span>
+                <input
+                  className="input pl-8"
+                  type="number"
+                  inputMode="decimal"
+                  value={sellingPrice}
+                  onChange={(e) => setSellingPrice(e.target.value)}
+                  placeholder="0"
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
-        {hasProfit ? (
+        {!isDraft && hasProfit ? (
           <div
             className={`rounded-xl px-4 py-3 text-sm font-semibold flex items-center justify-between ${
               profit < 0
@@ -184,7 +242,7 @@ export default function AddProductPage() {
           className="input min-h-[90px]"
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="เช่น มีรอยนิดหน่อย, ไม่มีฝาครอบ"
+          placeholder={isDraft ? "เช่น รับมาจาก lot โครงการ" : "เช่น มีรอยนิดหน่อย, ไม่มีฝาครอบ"}
         />
       </section>
 
@@ -203,14 +261,24 @@ export default function AddProductPage() {
             >
               ยกเลิก
             </button>
-            <button type="submit" className="btn-primary flex-1" disabled={saving}>
+            <button
+              type="submit"
+              className="btn-primary flex-1"
+              disabled={saving}
+              style={
+                isDraft
+                  ? { background: "linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)" }
+                  : undefined
+              }
+            >
               {saving ? (
                 <>
                   <span className="spinner" /> กำลังบันทึก…
                 </>
               ) : (
                 <>
-                  <CheckIcon className="h-4 w-4" /> บันทึกสินค้า
+                  <CheckIcon className="h-4 w-4" />
+                  {isDraft ? "บันทึกแบบร่าง" : "บันทึกสินค้า"}
                 </>
               )}
             </button>
