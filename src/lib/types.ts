@@ -33,6 +33,10 @@ export type SaleDTO = {
   contact: string | null;
   trackingNumber: string | null;
   note: string | null;
+  shippingStatus: string;
+  shippingProvider: string | null;
+  shippedAt: string | null;
+  deliveredAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -48,6 +52,8 @@ export type DashboardSummary = {
   unsoldCostValue: number;
   unsoldCount: number;
   draftCostValue: number;
+  pendingShipping: number;
+  shippedCount: number;
   recentSales: SaleDTO[];
   reservedProducts: ProductDTO[];
   recentAvailable: ProductDTO[];

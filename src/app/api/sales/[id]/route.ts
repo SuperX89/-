@@ -22,6 +22,28 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (body.trackingNumber !== undefined)
     data.trackingNumber = body.trackingNumber?.trim() || null;
   if (body.note !== undefined) data.note = body.note?.trim() || null;
+  if (body.shippingProvider !== undefined)
+    data.shippingProvider = body.shippingProvider?.trim() || null;
+
+  if (typeof body.shippingStatus === "string") {
+    data.shippingStatus = body.shippingStatus;
+    // Auto-stamp timestamps when status advances
+    if (body.shippingStatus === "shipped" && !existing.shippedAt) {
+      data.shippedAt = new Date();
+    }
+    if (body.shippingStatus === "delivered") {
+      if (!existing.shippedAt) data.shippedAt = new Date();
+      data.deliveredAt = new Date();
+    }
+    if (body.shippingStatus === "pending") {
+      data.shippedAt = null;
+      data.deliveredAt = null;
+    }
+    if (body.shippingStatus === "no-shipping") {
+      data.shippedAt = null;
+      data.deliveredAt = null;
+    }
+  }
 
   const updated = await prisma.sale.update({ where: { id }, data });
   return NextResponse.json(toSaleDTO(updated));

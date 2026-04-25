@@ -50,6 +50,10 @@ export function toSaleDTO(s: Sale): SaleDTO {
     contact: s.contact,
     trackingNumber: s.trackingNumber,
     note: s.note,
+    shippingStatus: s.shippingStatus,
+    shippingProvider: s.shippingProvider,
+    shippedAt: s.shippedAt ? s.shippedAt.toISOString() : null,
+    deliveredAt: s.deliveredAt ? s.deliveredAt.toISOString() : null,
     createdAt: s.createdAt.toISOString(),
     updatedAt: s.updatedAt.toISOString(),
   };

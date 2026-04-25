@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import BottomSheet from "@/components/BottomSheet";
+import { ShippingStatusBadge } from "@/components/Badges";
 import {
   BoxIcon,
   CalendarIcon,
   ChatIcon,
+  CheckIcon,
   EditIcon,
   NoteIcon,
   PackageIcon,
@@ -13,12 +16,38 @@ import {
   SearchIcon,
   UserIcon,
 } from "@/components/Icons";
+import { useToast } from "@/components/Toaster";
 import { formatMoney, formatDate, formatDateTime, toInputDate } from "@/lib/format";
+import {
+  SHIPPING_PROVIDERS,
+  shippingProviderLabel,
+  shippingStatusLabel,
+} from "@/lib/constants";
 import type { SaleDTO } from "@/lib/types";
 
-type Summary = { count: number; totalRevenue: number; totalProfit: number; totalShipping: number };
+type Summary = {
+  count: number;
+  totalRevenue: number;
+  totalProfit: number;
+  totalShipping: number;
+  pendingCount: number;
+  shippedCount: number;
+  deliveredCount: number;
+  noShippingCount: number;
+};
 
 export default function SalesPage() {
+  return (
+    <Suspense>
+      <SalesContent />
+    </Suspense>
+  );
+}
+
+function SalesContent() {
+  const searchParams = useSearchParams();
+  const initialShipping = searchParams.get("shippingStatus") ?? "all";
+
   const [sales, setSales] = useState<SaleDTO[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,6 +55,7 @@ export default function SalesPage() {
   const [from, setFrom] = useState<string>("");
   const [to, setTo] = useState<string>("");
   const [preset, setPreset] = useState<"all" | 7 | 30 | 90 | "custom">("all");
+  const [shippingFilter, setShippingFilter] = useState<string>(initialShipping);
   const [selected, setSelected] = useState<SaleDTO | null>(null);
 
   const load = useMemo(
@@ -35,13 +65,14 @@ export default function SalesPage() {
       if (q) params.set("q", q);
       if (from) params.set("from", from);
       if (to) params.set("to", to);
+      if (shippingFilter !== "all") params.set("shippingStatus", shippingFilter);
       const res = await fetch("/api/sales?" + params.toString());
       const data = await res.json();
       setSales(data.sales);
       setSummary(data.summary);
       setLoading(false);
     },
-    [q, from, to]
+    [q, from, to, shippingFilter]
   );
 
   useEffect(() => {
@@ -102,12 +133,45 @@ export default function SalesPage() {
         </div>
       </div>
 
+      {/* Shipping status tiles */}
+      {summary && (
+        <section className="grid grid-cols-3 gap-2">
+          <ShipTile
+            label="รอส่ง"
+            value={summary.pendingCount}
+            color="bg-orange-500 text-white"
+            active={shippingFilter === "pending"}
+            onClick={() =>
+              setShippingFilter(shippingFilter === "pending" ? "all" : "pending")
+            }
+          />
+          <ShipTile
+            label="ส่งแล้ว"
+            value={summary.shippedCount}
+            color="bg-sky-500 text-white"
+            active={shippingFilter === "shipped"}
+            onClick={() =>
+              setShippingFilter(shippingFilter === "shipped" ? "all" : "shipped")
+            }
+          />
+          <ShipTile
+            label="ลูกค้ารับแล้ว"
+            value={summary.deliveredCount}
+            color="bg-brand-500 text-white"
+            active={shippingFilter === "delivered"}
+            onClick={() =>
+              setShippingFilter(shippingFilter === "delivered" ? "all" : "delivered")
+            }
+          />
+        </section>
+      )}
+
       <div className="relative">
         <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-400 h-4 w-4" />
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="ค้นหา ชื่อสินค้า / ลูกค้า"
+          placeholder="ค้นหา ชื่อสินค้า / ลูกค้า / เลขพัสดุ"
           className="input pl-11"
         />
       </div>
@@ -162,6 +226,20 @@ export default function SalesPage() {
         </div>
       </details>
 
+      {shippingFilter !== "all" && (
+        <div className="flex items-center justify-between bg-brand-50 ring-1 ring-brand-200 rounded-xl px-3 py-2 text-[12px]">
+          <span className="text-brand-800 font-semibold">
+            กรอง: {shippingStatusLabel(shippingFilter)}
+          </span>
+          <button
+            onClick={() => setShippingFilter("all")}
+            className="text-brand-700 font-semibold"
+          >
+            ล้าง ✕
+          </button>
+        </div>
+      )}
+
       {loading ? (
         <div className="space-y-2">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -196,6 +274,9 @@ export default function SalesPage() {
                 )}
               </div>
               <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <ShippingStatusBadge status={s.shippingStatus} />
+                </div>
                 <div className="font-semibold text-ink-900 truncate tracking-tight">
                   {s.snapshotName}
                 </div>
@@ -204,9 +285,12 @@ export default function SalesPage() {
                   <span className="mx-1.5 text-ink-300">·</span>
                   <span>{formatDate(s.soldAt)}</span>
                 </div>
-                {s.trackingNumber ? (
+                {s.trackingNumber || s.shippingProvider ? (
                   <div className="text-[11px] text-brand-600 font-medium mt-0.5 truncate flex items-center gap-1">
-                    <PackageIcon className="h-3 w-3" /> {s.trackingNumber}
+                    <PackageIcon className="h-3 w-3" />
+                    {s.shippingProvider ? shippingProviderLabel(s.shippingProvider) : ""}
+                    {s.shippingProvider && s.trackingNumber ? " · " : ""}
+                    {s.trackingNumber}
                   </div>
                 ) : null}
               </div>
@@ -234,6 +318,36 @@ export default function SalesPage() {
   );
 }
 
+function ShipTile({
+  label,
+  value,
+  color,
+  active,
+  onClick,
+}: {
+  label: string;
+  value: number;
+  color: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`card p-3 text-center transition active:scale-95 ${
+        active ? "ring-2 ring-brand-400" : ""
+      }`}
+    >
+      <div
+        className={`h-9 rounded-xl flex items-center justify-center font-bold tracking-tight ${color}`}
+      >
+        {value}
+      </div>
+      <div className="text-[11px] text-ink-600 font-semibold mt-1.5">{label}</div>
+    </button>
+  );
+}
+
 function SaleDetailSheet({
   sale,
   onClose,
@@ -243,18 +357,22 @@ function SaleDetailSheet({
   onClose: () => void;
   onUpdated: () => void;
 }) {
+  const toast = useToast();
   const [editing, setEditing] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [contact, setContact] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
+  const [shippingProvider, setShippingProvider] = useState("");
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+  const [advancing, setAdvancing] = useState(false);
 
   useEffect(() => {
     if (sale) {
       setCustomerName(sale.customerName ?? "");
       setContact(sale.contact ?? "");
       setTrackingNumber(sale.trackingNumber ?? "");
+      setShippingProvider(sale.shippingProvider ?? "");
       setNote(sale.note ?? "");
       setEditing(false);
     }
@@ -267,7 +385,13 @@ function SaleDetailSheet({
       const res = await fetch(`/api/sales/${sale.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customerName, contact, trackingNumber, note }),
+        body: JSON.stringify({
+          customerName,
+          contact,
+          trackingNumber,
+          shippingProvider,
+          note,
+        }),
       });
       if (!res.ok) throw new Error("บันทึกไม่สำเร็จ");
       setEditing(false);
@@ -275,6 +399,34 @@ function SaleDetailSheet({
       onClose();
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function advanceStatus(next: string) {
+    if (!sale) return;
+    setAdvancing(true);
+    try {
+      const res = await fetch(`/api/sales/${sale.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shippingStatus: next }),
+      });
+      if (!res.ok) throw new Error("เปลี่ยนสถานะไม่สำเร็จ");
+      const updated = (await res.json()) as SaleDTO;
+      toast(
+        next === "shipped"
+          ? "เปลี่ยนเป็น 'ส่งแล้ว'"
+          : next === "delivered"
+            ? "เปลี่ยนเป็น 'ลูกค้ารับแล้ว'"
+            : "อัปเดตสถานะแล้ว"
+      );
+      // Hot-update local state
+      Object.assign(sale, updated);
+      onUpdated();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "เปลี่ยนสถานะไม่สำเร็จ", "error");
+    } finally {
+      setAdvancing(false);
     }
   }
 
@@ -306,12 +458,73 @@ function SaleDetailSheet({
                 <BoxIcon className="h-7 w-7" />
               )}
             </div>
-            <div>
-              <div className="font-bold text-ink-900 tracking-tight">{sale.snapshotName}</div>
+            <div className="flex-1 min-w-0">
+              <div className="font-bold text-ink-900 tracking-tight truncate">
+                {sale.snapshotName}
+              </div>
               <div className="text-[12px] text-ink-500 mt-0.5">
                 ขายเมื่อ {formatDateTime(sale.soldAt)}
               </div>
             </div>
+          </div>
+
+          {/* Shipping status section */}
+          <div className="bg-ink-50 rounded-2xl p-4 ring-1 ring-ink-900/[0.04] space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[12px] text-ink-500 font-semibold">สถานะการส่ง</span>
+              <ShippingStatusBadge status={sale.shippingStatus} />
+            </div>
+            {sale.shippedAt && (
+              <div className="text-[11px] text-ink-500">
+                ส่งเมื่อ {formatDateTime(sale.shippedAt)}
+              </div>
+            )}
+            {sale.deliveredAt && (
+              <div className="text-[11px] text-brand-700">
+                ลูกค้ารับแล้วเมื่อ {formatDateTime(sale.deliveredAt)}
+              </div>
+            )}
+            {sale.shippingStatus !== "no-shipping" && (
+              <div className="grid grid-cols-2 gap-2">
+                {sale.shippingStatus === "pending" && (
+                  <button
+                    className="rounded-xl bg-sky-500 text-white font-semibold py-2.5 text-[13px] active:scale-95 transition inline-flex items-center justify-center gap-1.5 disabled:opacity-50"
+                    onClick={() => advanceStatus("shipped")}
+                    disabled={advancing}
+                  >
+                    <PackageIcon className="h-4 w-4" /> บันทึกว่าส่งแล้ว
+                  </button>
+                )}
+                {sale.shippingStatus === "shipped" && (
+                  <>
+                    <button
+                      className="rounded-xl bg-ink-100 text-ink-700 font-semibold py-2.5 text-[13px] active:scale-95 transition disabled:opacity-50"
+                      onClick={() => advanceStatus("pending")}
+                      disabled={advancing}
+                    >
+                      ย้อนกลับเป็นรอส่ง
+                    </button>
+                    <button
+                      className="rounded-xl text-white font-semibold py-2.5 text-[13px] active:scale-95 transition inline-flex items-center justify-center gap-1.5 disabled:opacity-50"
+                      style={{ background: "linear-gradient(135deg, #10b981 0%, #0d9488 100%)" }}
+                      onClick={() => advanceStatus("delivered")}
+                      disabled={advancing}
+                    >
+                      <CheckIcon className="h-4 w-4" /> ลูกค้ารับแล้ว
+                    </button>
+                  </>
+                )}
+                {sale.shippingStatus === "delivered" && (
+                  <button
+                    className="col-span-2 rounded-xl bg-ink-100 text-ink-600 font-semibold py-2.5 text-[13px] active:scale-95 transition disabled:opacity-50"
+                    onClick={() => advanceStatus("shipped")}
+                    disabled={advancing}
+                  >
+                    ย้อนกลับเป็นส่งแล้ว
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3 bg-ink-50 rounded-2xl p-4 ring-1 ring-ink-900/[0.04]">
@@ -344,6 +557,23 @@ function SaleDetailSheet({
                 />
               </div>
               <div>
+                <label className="label">ขนส่ง</label>
+                <div className="flex gap-1.5 flex-wrap">
+                  {SHIPPING_PROVIDERS.map((p) => (
+                    <button
+                      key={p.value}
+                      type="button"
+                      onClick={() =>
+                        setShippingProvider(shippingProvider === p.value ? "" : p.value)
+                      }
+                      className={shippingProvider === p.value ? "chip-on" : "chip-off"}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
                 <label className="label">เลขพัสดุ</label>
                 <input
                   className="input"
@@ -364,6 +594,15 @@ function SaleDetailSheet({
             <div className="space-y-2 text-[13px]">
               <InfoRow label="ลูกค้า" value={sale.customerName} icon={<UserIcon />} />
               <InfoRow label="ช่องทางติดต่อ" value={sale.contact} icon={<ChatIcon />} />
+              <InfoRow
+                label="ขนส่ง"
+                value={
+                  sale.shippingProvider
+                    ? shippingProviderLabel(sale.shippingProvider)
+                    : null
+                }
+                icon={<PackageIcon />}
+              />
               <InfoRow label="เลขพัสดุ" value={sale.trackingNumber} icon={<PackageIcon />} />
               {sale.note ? <InfoRow label="หมายเหตุ" value={sale.note} icon={<NoteIcon />} /> : null}
             </div>

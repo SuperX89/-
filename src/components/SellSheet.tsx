@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import BottomSheet from "./BottomSheet";
 import { useToast } from "./Toaster";
 import { formatMoney, toInputDate } from "@/lib/format";
+import { SHIPPING_PROVIDERS } from "@/lib/constants";
 import type { ProductDTO } from "@/lib/types";
 
 export default function SellSheet({
@@ -24,6 +25,8 @@ export default function SellSheet({
   const [customerName, setCustomerName] = useState("");
   const [contact, setContact] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
+  const [shippingProvider, setShippingProvider] = useState<string>("");
+  const [needsShipping, setNeedsShipping] = useState(true);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -35,6 +38,8 @@ export default function SellSheet({
       setCustomerName(product.reservation?.customerName ?? "");
       setContact(product.reservation?.contact ?? "");
       setTrackingNumber("");
+      setShippingProvider("");
+      setNeedsShipping(true);
       setNote("");
     }
   }, [product, open]);
@@ -63,6 +68,8 @@ export default function SellSheet({
           contact,
           trackingNumber,
           note,
+          shippingProvider: needsShipping ? shippingProvider : null,
+          shippingStatus: needsShipping ? "pending" : "no-shipping",
         }),
       });
       if (!res.ok) throw new Error((await res.json()).error || "เกิดข้อผิดพลาด");
@@ -153,15 +160,59 @@ export default function SellSheet({
             onChange={(e) => setContact(e.target.value)}
           />
         </div>
-        <div>
-          <label className="label">เลขพัสดุ</label>
-          <input
-            className="input"
-            value={trackingNumber}
-            onChange={(e) => setTrackingNumber(e.target.value)}
-            placeholder="ถ้ายังไม่มี เว้นว่างได้"
-          />
+        <div className="card-flat p-3 space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="label mb-0">การจัดส่ง</label>
+            <button
+              type="button"
+              onClick={() => setNeedsShipping(!needsShipping)}
+              className={`relative h-6 w-11 rounded-full transition ${
+                needsShipping ? "bg-brand-500" : "bg-ink-200"
+              }`}
+              aria-label="ส่งของไหม"
+            >
+              <span
+                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${
+                  needsShipping ? "left-5" : "left-0.5"
+                }`}
+              />
+            </button>
+          </div>
+
+          {needsShipping && (
+            <>
+              <div>
+                <label className="label">ขนส่ง</label>
+                <div className="flex gap-1.5 flex-wrap">
+                  {SHIPPING_PROVIDERS.map((p) => (
+                    <button
+                      key={p.value}
+                      type="button"
+                      onClick={() =>
+                        setShippingProvider(shippingProvider === p.value ? "" : p.value)
+                      }
+                      className={
+                        shippingProvider === p.value ? "chip-on" : "chip-off"
+                      }
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="label">เลขพัสดุ</label>
+                <input
+                  className="input"
+                  value={trackingNumber}
+                  onChange={(e) => setTrackingNumber(e.target.value)}
+                  placeholder="ถ้ายังไม่มี เว้นว่างได้"
+                />
+              </div>
+            </>
+          )}
         </div>
+
         <div>
           <label className="label">หมายเหตุการขาย</label>
           <textarea

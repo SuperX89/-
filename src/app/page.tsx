@@ -138,6 +138,30 @@ export default function DashboardPage() {
             </Link>
           </section>
 
+          {data.pendingShipping > 0 && (
+            <Link
+              href="/sales?shippingStatus=pending"
+              className="card p-3 flex items-center gap-3 ring-1 ring-orange-200 active:scale-[0.98] transition"
+              style={{ background: "linear-gradient(135deg, #fff7ed, #ffedd5)" }}
+            >
+              <div
+                className="h-10 w-10 rounded-xl flex items-center justify-center text-white"
+                style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
+              >
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 8h18l-1 11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z" />
+                  <path d="M8 8V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v3" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <div className="font-bold text-orange-900 tracking-tight text-[14px]">
+                  มีพัสดุรอส่ง {data.pendingShipping} รายการ
+                </div>
+                <div className="text-[11px] text-orange-700">กดเพื่อดูและบันทึกว่าส่งแล้ว →</div>
+              </div>
+            </Link>
+          )}
+
           {data.draftProducts.length > 0 && (
             <section>
               <SectionHeader

@@ -25,6 +25,9 @@ export async function GET() {
   const recentAvailable = available.slice(0, 5).map(toProductDTO);
   const draftProducts = draft.slice(0, 8).map(toProductDTO);
 
+  const pendingShipping = sales.filter((s) => s.shippingStatus === "pending").length;
+  const shippedCount = sales.filter((s) => s.shippingStatus === "shipped").length;
+
   return NextResponse.json({
     totalProducts: inStock.length,
     available: available.length,
@@ -36,6 +39,8 @@ export async function GET() {
     unsoldCostValue,
     unsoldCount: unsold.length,
     draftCostValue,
+    pendingShipping,
+    shippedCount,
     recentSales,
     reservedProducts,
     recentAvailable,

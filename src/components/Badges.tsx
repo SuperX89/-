@@ -1,4 +1,4 @@
-import { statusLabel, conditionLabel } from "@/lib/constants";
+import { statusLabel, conditionLabel, shippingStatusLabel } from "@/lib/constants";
 
 export function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { cls: string; dot: string }> = {
@@ -24,6 +24,34 @@ export function StatusBadge({ status }: { status: string }) {
     <span className={`pill ${s.cls}`}>
       <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
       {statusLabel(status)}
+    </span>
+  );
+}
+
+export function ShippingStatusBadge({ status }: { status: string }) {
+  const map: Record<string, { cls: string; dot: string }> = {
+    pending: {
+      cls: "bg-orange-50 text-orange-700 ring-1 ring-orange-200",
+      dot: "bg-orange-500",
+    },
+    shipped: {
+      cls: "bg-sky-50 text-sky-700 ring-1 ring-sky-200",
+      dot: "bg-sky-500",
+    },
+    delivered: {
+      cls: "bg-brand-50 text-brand-700 ring-1 ring-brand-200",
+      dot: "bg-brand-500",
+    },
+    "no-shipping": {
+      cls: "bg-ink-100 text-ink-600 ring-1 ring-ink-200",
+      dot: "bg-ink-400",
+    },
+  };
+  const s = map[status] ?? map.pending;
+  return (
+    <span className={`pill ${s.cls}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
+      {shippingStatusLabel(status)}
     </span>
   );
 }

@@ -13,6 +13,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     contact,
     trackingNumber,
     note,
+    shippingProvider,
+    shippingStatus,
   } = body as {
     actualSalePrice?: number;
     shippingCost?: number;
@@ -21,6 +23,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     contact?: string;
     trackingNumber?: string;
     note?: string;
+    shippingProvider?: string;
+    shippingStatus?: string;
   };
 
   const product = await prisma.product.findUnique({ where: { id } });
@@ -57,6 +61,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         contact: contact?.trim() || product.reservationContact || null,
         trackingNumber: trackingNumber?.trim() || null,
         note: note?.trim() || null,
+        shippingStatus: shippingStatus || "pending",
+        shippingProvider: shippingProvider?.trim() || null,
       },
     }),
   ]);
