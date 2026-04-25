@@ -7,6 +7,7 @@ const items = [
   { href: "/", label: "หน้าหลัก", icon: HomeIcon },
   { href: "/products", label: "สินค้า", icon: BoxIcon },
   { href: "/add", label: "เพิ่ม", icon: PlusIcon, primary: true },
+  { href: "/drafts", label: "แบบร่าง", icon: DraftIcon },
   { href: "/sales", label: "ยอดขาย", icon: SalesIcon },
 ];
 
@@ -19,7 +20,7 @@ export default function BottomNav() {
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <div className="mx-3 mb-3 rounded-3xl bg-white/90 backdrop-blur-xl shadow-lift ring-1 ring-ink-900/[0.05]">
-        <div className="grid grid-cols-4 px-2 py-1.5">
+        <div className="grid grid-cols-5 px-2 py-1.5">
           {items.map((item) => {
             const active =
               item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
@@ -117,6 +118,23 @@ function PlusIcon({ className = "" }: { className?: string }) {
       className={className}
     >
       <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+function DraftIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M5 4h11l4 4v12H5z" />
+      <path d="M14 4v4h4" />
+      <path d="M9 13h6M9 16h4" />
     </svg>
   );
 }

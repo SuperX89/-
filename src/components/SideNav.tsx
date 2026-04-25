@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BoxIcon, PlusIcon, ReceiptIcon } from "./Icons";
+import { BoxIcon, NoteIcon, PlusIcon, ReceiptIcon } from "./Icons";
 
 function HomeIcon({ className = "h-4 w-4" }: { className?: string }) {
   return (
@@ -16,6 +16,7 @@ const items = [
   { href: "/", label: "แดชบอร์ด", Icon: HomeIcon },
   { href: "/products", label: "สินค้า", Icon: BoxIcon },
   { href: "/add", label: "เพิ่มสินค้า", Icon: PlusIcon },
+  { href: "/drafts", label: "แบบร่าง", Icon: NoteIcon },
   { href: "/sales", label: "รายการขาย", Icon: ReceiptIcon },
 ];
 
