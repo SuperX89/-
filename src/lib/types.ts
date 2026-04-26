@@ -41,6 +41,32 @@ export type SaleDTO = {
   updatedAt: string;
 };
 
+export type MonthlyBucket = {
+  month: string;
+  monthLabel: string;
+  revenue: number;
+  profit: number;
+  shipping: number;
+  cost: number;
+  count: number;
+};
+
+export type AnalyticsSummary = {
+  months: MonthlyBucket[];
+  thisMonth: MonthlyBucket & { label: string };
+  lastMonth: MonthlyBucket;
+  compare: {
+    revenueChange: number | null;
+    profitChange: number | null;
+    countChange: number | null;
+  };
+  bestMonth: MonthlyBucket | null;
+  avgProfit: number;
+  avgRevenue: number;
+  categories: { category: string; count: number; revenue: number; profit: number }[];
+  totalAllMonths: { revenue: number; profit: number; count: number };
+};
+
 export type DashboardSummary = {
   totalProducts: number;
   available: number;

@@ -18,7 +18,19 @@ const items = [
   { href: "/add", label: "เพิ่มสินค้า", Icon: PlusIcon },
   { href: "/drafts", label: "แบบร่าง", Icon: NoteIcon },
   { href: "/sales", label: "รายการขาย", Icon: ReceiptIcon },
+  { href: "/analytics", label: "สถิติ", Icon: ChartIcon },
 ];
+
+function ChartIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M3 21h18" />
+      <rect x="6" y="11" width="3" height="8" rx="0.6" />
+      <rect x="11" y="6" width="3" height="13" rx="0.6" />
+      <rect x="16" y="13" width="3" height="6" rx="0.6" />
+    </svg>
+  );
+}
 
 export default function SideNav() {
   const pathname = usePathname();

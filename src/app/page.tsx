@@ -48,8 +48,9 @@ export default function DashboardPage() {
       ) : data ? (
         <>
           {/* HERO — total profit */}
-          <div
-            className="relative overflow-hidden rounded-3xl p-5 text-white shadow-brand"
+          <Link
+            href="/analytics"
+            className="block relative overflow-hidden rounded-3xl p-5 text-white shadow-brand active:scale-[0.99] transition"
             style={{
               background:
                 "linear-gradient(135deg, #0d9488 0%, #10b981 55%, #34d399 100%)",
@@ -58,9 +59,14 @@ export default function DashboardPage() {
             <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
             <div className="absolute -bottom-12 -left-6 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
             <div className="relative">
-              <div className="flex items-center gap-2 text-white/80 text-[13px] font-medium">
-                <SparkleIcon className="h-4 w-4" />
-                กำไรรวมสะสม
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-white/80 text-[13px] font-medium">
+                  <SparkleIcon className="h-4 w-4" />
+                  กำไรรวมสะสม
+                </div>
+                <span className="text-[12px] text-white/90 font-semibold bg-white/15 rounded-full px-2.5 py-1 backdrop-blur">
+                  ดูสถิติ →
+                </span>
               </div>
               <div className="mt-1 flex items-baseline gap-1.5">
                 <span className="text-[34px] font-bold tracking-tight leading-none">
@@ -84,7 +90,7 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-          </div>
+          </Link>
 
           {/* Quick status tiles */}
           <section className="grid grid-cols-4 gap-2.5">
