@@ -20,8 +20,14 @@ const display = Prompt({
 });
 
 export const metadata: Metadata = {
-  title: "Toy Resale · มือสองเด็ก",
+  title: "My Little treasure.shop",
   description: "ระบบสต็อกและขายของมือสองของเล่น/ของใช้เด็ก",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "Treasure",
+    statusBarStyle: "default",
+  },
 };
 
 export const viewport: Viewport = {
