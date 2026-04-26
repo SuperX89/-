@@ -126,6 +126,79 @@ export async function GET() {
     return Math.round(((current - prev) / Math.abs(prev)) * 100);
   }
 
+  // Profit margin (% of revenue)
+  const totalRev = months.reduce((s, m) => s + m.revenue, 0);
+  const totalProf = months.reduce((s, m) => s + m.profit, 0);
+  const overallMargin = totalRev > 0 ? Math.round((totalProf / totalRev) * 100) : 0;
+  const thisMonthMargin =
+    thisMonth.revenue > 0
+      ? Math.round((thisMonth.profit / thisMonth.revenue) * 100)
+      : 0;
+  const lastMonthMargin =
+    lastMonth.revenue > 0
+      ? Math.round((lastMonth.profit / lastMonth.revenue) * 100)
+      : 0;
+
+  // Average days to sell (createdAt → soldAt)
+  const soldProductsWithCreated = productIds.length
+    ? await prisma.product.findMany({
+        where: { id: { in: productIds } },
+        select: { id: true, createdAt: true },
+      })
+    : [];
+  const createdMap = new Map(
+    soldProductsWithCreated.map((p) => [p.id, p.createdAt])
+  );
+  let totalDays = 0;
+  let countWithCreated = 0;
+  let fastestDays: number | null = null;
+  let slowestDays: number | null = null;
+  for (const s of sales) {
+    const created = createdMap.get(s.productId);
+    if (!created) continue;
+    const days = Math.floor(
+      (s.soldAt.getTime() - created.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    if (days < 0) continue;
+    totalDays += days;
+    countWithCreated += 1;
+    if (fastestDays === null || days < fastestDays) fastestDays = days;
+    if (slowestDays === null || days > slowestDays) slowestDays = days;
+  }
+  const avgDaysToSell =
+    countWithCreated > 0 ? Math.round(totalDays / countWithCreated) : 0;
+
+  // Top 5 sales by profit (each product is unique in resale)
+  const topSales = [...sales]
+    .sort((a, b) => b.profit - a.profit)
+    .slice(0, 5)
+    .map((s) => ({
+      id: s.id,
+      productId: s.productId,
+      name: s.snapshotName,
+      image: s.snapshotImage,
+      category: productCategories.get(s.productId) ?? "other",
+      revenue: s.actualSalePrice,
+      profit: s.profit,
+      cost: s.snapshotCostPrice,
+      soldAt: s.soldAt.toISOString(),
+      daysToSell: createdMap.get(s.productId)
+        ? Math.max(
+            0,
+            Math.floor(
+              (s.soldAt.getTime() - createdMap.get(s.productId)!.getTime()) /
+                (1000 * 60 * 60 * 24)
+            )
+          )
+        : null,
+    }));
+
+  // Avg profit per item
+  const avgProfitPerItem =
+    sales.length > 0
+      ? Math.round(sales.reduce((s, x) => s + x.profit, 0) / sales.length)
+      : 0;
+
   return NextResponse.json({
     months,
     thisMonth: {
@@ -141,10 +214,18 @@ export async function GET() {
     bestMonth,
     avgProfit,
     avgRevenue,
+    avgProfitPerItem,
+    avgDaysToSell,
+    fastestDays,
+    slowestDays,
+    overallMargin,
+    thisMonthMargin,
+    lastMonthMargin,
+    topSales,
     categories,
     totalAllMonths: {
-      revenue: months.reduce((s, m) => s + m.revenue, 0),
-      profit: months.reduce((s, m) => s + m.profit, 0),
+      revenue: totalRev,
+      profit: totalProf,
       count: months.reduce((s, m) => s + m.count, 0),
     },
   });

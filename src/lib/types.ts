@@ -51,6 +51,19 @@ export type MonthlyBucket = {
   count: number;
 };
 
+export type TopSale = {
+  id: string;
+  productId: string;
+  name: string;
+  image: string | null;
+  category: string;
+  revenue: number;
+  profit: number;
+  cost: number;
+  soldAt: string;
+  daysToSell: number | null;
+};
+
 export type AnalyticsSummary = {
   months: MonthlyBucket[];
   thisMonth: MonthlyBucket & { label: string };
@@ -63,6 +76,14 @@ export type AnalyticsSummary = {
   bestMonth: MonthlyBucket | null;
   avgProfit: number;
   avgRevenue: number;
+  avgProfitPerItem: number;
+  avgDaysToSell: number;
+  fastestDays: number | null;
+  slowestDays: number | null;
+  overallMargin: number;
+  thisMonthMargin: number;
+  lastMonthMargin: number;
+  topSales: TopSale[];
   categories: { category: string; count: number; revenue: number; profit: number }[];
   totalAllMonths: { revenue: number; profit: number; count: number };
 };

@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CategoryIcon } from "@/components/Icons";
+import { BoxIcon, CategoryIcon } from "@/components/Icons";
 import { categoryLabel } from "@/lib/constants";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, formatDate } from "@/lib/format";
 import type { AnalyticsSummary, MonthlyBucket } from "@/lib/types";
 
 type Metric = "profit" | "revenue" | "count";
@@ -86,6 +86,36 @@ export default function AnalyticsPage() {
             </div>
           </section>
 
+          {/* Key stats — 3 tiles */}
+          <section className="grid grid-cols-3 gap-2">
+            <StatTile
+              label="กำไรเฉลี่ย"
+              value={`${data.overallMargin}%`}
+              hint="ของยอดขาย"
+              accent="brand"
+            />
+            <StatTile
+              label="ขายเฉลี่ย"
+              value={
+                data.avgDaysToSell === 0 && data.totalAllMonths.count === 0
+                  ? "—"
+                  : `${data.avgDaysToSell} วัน`
+              }
+              hint={
+                data.fastestDays !== null
+                  ? `เร็วสุด ${data.fastestDays}ว`
+                  : "ตั้งแต่รับเข้าสต็อก"
+              }
+              accent="sky"
+            />
+            <StatTile
+              label="กำไร/ชิ้น"
+              value={`฿${formatMoney(data.avgProfitPerItem)}`}
+              hint="เฉลี่ยต่อรายการ"
+              accent="peach"
+            />
+          </section>
+
           {/* Metric toggle */}
           <section className="card p-1.5">
             <div className="grid grid-cols-3 gap-1">
@@ -122,6 +152,71 @@ export default function AnalyticsPage() {
             </div>
             <BarChart months={data.months} metric={metric} />
           </section>
+
+          {/* Top 5 best sellers */}
+          {data.topSales.length > 0 && (
+            <section>
+              <div className="flex items-center justify-between mb-2.5">
+                <h2 className="h-section flex items-center gap-2">
+                  <span className="text-amber-500">★</span>
+                  สินค้าทำกำไรสูงสุด
+                </h2>
+                <span className="text-[11px] text-ink-500">Top {data.topSales.length}</span>
+              </div>
+              <div className="space-y-2">
+                {data.topSales.map((s, i) => (
+                  <div key={s.id} className="card p-3 flex items-center gap-3">
+                    <div
+                      className={`h-7 w-7 rounded-full font-bold text-[12px] flex items-center justify-center flex-shrink-0 ${
+                        i === 0
+                          ? "bg-amber-100 text-amber-700 ring-1 ring-amber-300"
+                          : i === 1
+                            ? "bg-ink-200 text-ink-700"
+                            : i === 2
+                              ? "bg-orange-100 text-orange-700"
+                              : "bg-ink-100 text-ink-500"
+                      }`}
+                    >
+                      {i + 1}
+                    </div>
+                    <div className="h-12 w-12 rounded-xl bg-ink-100 overflow-hidden flex-shrink-0 ring-1 ring-ink-900/[0.03] flex items-center justify-center text-ink-400">
+                      {s.image ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={s.image} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <BoxIcon className="h-6 w-6" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-ink-900 truncate tracking-tight text-[14px]">
+                        {s.name}
+                      </div>
+                      <div className="text-[11px] text-ink-500 truncate flex items-center gap-1.5 mt-0.5">
+                        <CategoryIcon value={s.category} className="h-3 w-3" />
+                        <span>{categoryLabel(s.category)}</span>
+                        {s.daysToSell !== null && (
+                          <>
+                            <span className="text-ink-300">·</span>
+                            <span>ขาย {s.daysToSell}ว</span>
+                          </>
+                        )}
+                        <span className="text-ink-300">·</span>
+                        <span>{formatDate(s.soldAt)}</span>
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <div className="font-bold text-brand-600 tracking-tight">
+                        +฿{formatMoney(s.profit)}
+                      </div>
+                      <div className="text-[10px] text-ink-500">
+                        ฿{formatMoney(s.revenue)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Category breakdown */}
           {data.categories.length > 0 && (
@@ -184,6 +279,38 @@ export default function AnalyticsPage() {
       ) : (
         <div className="card p-8 text-center text-ink-500">โหลดข้อมูลไม่สำเร็จ</div>
       )}
+    </div>
+  );
+}
+
+function StatTile({
+  label,
+  value,
+  hint,
+  accent,
+}: {
+  label: string;
+  value: string;
+  hint: string;
+  accent: "brand" | "sky" | "peach";
+}) {
+  const accentMap = {
+    brand: { bg: "bg-brand-50", ring: "ring-brand-100", text: "text-brand-700" },
+    sky: { bg: "bg-sky-50", ring: "ring-sky-100", text: "text-sky-700" },
+    peach: { bg: "bg-peach-50", ring: "ring-peach-100", text: "text-peach-500" },
+  };
+  const a = accentMap[accent];
+  return (
+    <div className="card p-3 text-center">
+      <div className={`text-[10px] font-semibold ${a.text} uppercase tracking-wide mb-1`}>
+        {label}
+      </div>
+      <div className={`rounded-xl py-2 ${a.bg} ring-1 ${a.ring}`}>
+        <div className="font-bold text-ink-900 tracking-tight text-[16px] leading-none">
+          {value}
+        </div>
+      </div>
+      <div className="text-[10px] text-ink-500 mt-1.5 truncate">{hint}</div>
     </div>
   );
 }
