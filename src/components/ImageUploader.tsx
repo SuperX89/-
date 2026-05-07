@@ -1,6 +1,26 @@
 "use client";
 
 import { useRef, useState } from "react";
+import imageCompression from "browser-image-compression";
+
+// Compress + convert HEIC/large photos before upload.
+// Keeps every output well under Vercel's 4.5MB serverless body limit.
+const COMPRESS_OPTS = {
+  maxSizeMB: 1.5,
+  maxWidthOrHeight: 1920,
+  useWebWorker: true,
+  fileType: "image/jpeg" as const,
+  initialQuality: 0.85,
+};
+
+async function prepareForUpload(file: File): Promise<File> {
+  // Always run through the compressor — it normalizes HEIC/HEIF and shrinks oversized photos.
+  // For files already small enough, the lib returns quickly without re-encoding heavily.
+  const compressed = await imageCompression(file, COMPRESS_OPTS);
+  // Ensure the resulting File has a sensible name + JPEG extension
+  const base = file.name.replace(/\.[^.]+$/, "") || "image";
+  return new File([compressed], `${base}.jpg`, { type: "image/jpeg" });
+}
 
 type Props = {
   images: string[];
@@ -34,11 +54,31 @@ export default function ImageUploader({
     setErr(null);
     try {
       const fd = new FormData();
-      for (const f of chosen) fd.append("files", f);
+      for (const f of chosen) {
+        try {
+          const prepared = await prepareForUpload(f);
+          fd.append("files", prepared);
+        } catch {
+          // Compression failed (very rare — e.g. corrupt file). Send original; server will validate.
+          fd.append("files", f);
+        }
+      }
       const res = await fetch("/api/upload", { method: "POST", body: fd });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "อัปโหลดไม่สำเร็จ");
+        let serverMsg = "";
+        try {
+          const data = await res.json();
+          serverMsg = data?.error ?? "";
+        } catch {
+          // not JSON (e.g. Vercel 413 HTML page) — fall through to status-based message
+        }
+        if (!serverMsg) {
+          if (res.status === 413) serverMsg = "ไฟล์ใหญ่เกินไป (server limit)";
+          else if (res.status === 401 || res.status === 403)
+            serverMsg = "ไม่ได้รับสิทธิ์อัปโหลด — ตรวจสอบ BLOB_READ_WRITE_TOKEN";
+          else serverMsg = `อัปโหลดไม่สำเร็จ (HTTP ${res.status})`;
+        }
+        throw new Error(serverMsg);
       }
       const { paths } = (await res.json()) as { paths: string[] };
       const newImages = [...images, ...paths];
